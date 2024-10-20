@@ -15,13 +15,13 @@ to use these build instructions.
 ### Build and Run Program
 
 ```bash
-g++ simple.cc main.cc -o simple-app
+g++ simple.cpp main.cpp -o simple-app
 ./simple-app
 ```
 
 ### Build and Run Tests
 
 ```bash
-g++ simple.cc simple_unittest.cc -lgtest -lgtest_main -o unit-test
+g++ simple.cpp simple_unittest.cpp -lgtest -lgtest_main -o unit-test
 ./unit-test
 ```

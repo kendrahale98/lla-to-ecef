@@ -15,7 +15,7 @@ to use these build instructions.
 ### Build and Run Program
 
 ```bash
-g++ simple.cc -o simple-app
+g++ simple.cc main.cc -o simple-app
 ./simple-app
 ```
 

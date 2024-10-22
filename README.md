@@ -1,5 +1,5 @@
 # lla-to-ecef
-Project to create an LLA to ECEF converter with on-demand velocity request feature.
+Project to create an LLA to ECEF converter with ability to calculate and interpolate ECEF velocites.
 
 ## Build Instructions
 

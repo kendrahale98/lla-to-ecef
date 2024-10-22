@@ -31,55 +31,49 @@ TEST(SumTest, Both) {
 
 // Tests points with a positive slope.
 TEST(InterpolateTest, PositiveSlope) {
-  double x0 = 1;
-  double y0 = 1;
-  double x1 = 7;
-  double y1 = 4;
-  EXPECT_EQ(3, Interpolate(x0, y0, x1, y1, 5));       // interpolate
-  EXPECT_EQ(3, Interpolate(x1, y1, x0, y0, 5));       // interpolate w/switched input order
-  EXPECT_EQ(5, Interpolate(x0, y0, x1, y1, 9));       // extrapolate high
-  EXPECT_EQ(-9.5, Interpolate(x0, y0, x1, y1, -20));  // extrapolate low
-  EXPECT_EQ(y0, Interpolate(x0, y0, x1, y1, x0));     // x = x0
-  EXPECT_EQ(y1, Interpolate(x0, y0, x1, y1, x1));     // x = x1
+  PointCartesian2D p0 = {1, 1};
+  PointCartesian2D p1 = {7, 4};
+  EXPECT_EQ(3, Interpolate(p0, p1, 5).y);       // interpolate
+  EXPECT_EQ(3, Interpolate(p1, p0, 5).y);       // interpolate w/switched input order
+  EXPECT_EQ(5, Interpolate(p0, p1, 9).y);       // extrapolate high
+  EXPECT_EQ(-9.5, Interpolate(p0, p1, -20).y);  // extrapolate low
+  EXPECT_EQ(p0.y, Interpolate(p0, p1, p0.x).y); // x = x0
+  EXPECT_EQ(p1.y, Interpolate(p0, p1, p1.x).y); // x = x1
 
 }
 
 // Tests points with a negative slope.
 TEST(InterpolateTest, NegativeSlope) {
-  double x0 = -1;
-  double y0 = 20;
-  double x1 = 6;
-  double y1 = -15;
-  EXPECT_EQ(15, Interpolate(x0, y0, x1, y1, 0));      // interpolate
-  EXPECT_EQ(-27.5, Interpolate(x0, y0, x1, y1, 8.5)); // extrapolate high
-  EXPECT_EQ(115, Interpolate(x0, y0, x1, y1, -20));   // extrapolate low
-  EXPECT_EQ(y0, Interpolate(x0, y0, x1, y1, x0));     // x = x0
-  EXPECT_EQ(y1, Interpolate(x0, y0, x1, y1, x1));     // x = x1
+  PointCartesian2D p0 = {-1, 20};
+  PointCartesian2D p1 = {6, -15};
+  EXPECT_EQ(15, Interpolate(p0, p1, 0).y);      // interpolate
+  EXPECT_EQ(15, Interpolate(p1, p0, 0).y);      // interpolate w/switched input order
+  EXPECT_EQ(-27.5, Interpolate(p0, p1, 8.5).y); // extrapolate high
+  EXPECT_EQ(115, Interpolate(p0, p1, -20).y);   // extrapolate low
+  EXPECT_EQ(p0.y, Interpolate(p0, p1, p0.x).y); // x = x0
+  EXPECT_EQ(p1.y, Interpolate(p0, p1, p1.x).y); // x = x1
 }
 
 // Tests points with a zero slope.
 TEST(InterpolateTest, ZeroSlope) {
-  double x0 = -4;
-  double y0 = 9;
-  double x1 = 7;
-  double y1 = 9;
-  EXPECT_EQ(9, Interpolate(x0, y0, x1, y1, 0));   // interpolate
-  EXPECT_EQ(9, Interpolate(x0, y0, x1, y1, 8.5)); // extrapolate high
-  EXPECT_EQ(9, Interpolate(x0, y0, x1, y1, -20)); // extrapolate low
-  EXPECT_EQ(y0, Interpolate(x0, y0, x1, y1, x0)); // x = x0
-  EXPECT_EQ(y1, Interpolate(x0, y0, x1, y1, x1)); // x = x1
+  PointCartesian2D p0 = {-4, 9};
+  PointCartesian2D p1 = {7, 9};
+  EXPECT_EQ(9, Interpolate(p0, p1, 0).y);       // interpolate
+  EXPECT_EQ(9, Interpolate(p1, p0, 0).y);       // interpolate w/switched input order
+  EXPECT_EQ(9, Interpolate(p0, p1, 8.5).y);     // extrapolate high
+  EXPECT_EQ(9, Interpolate(p0, p1, -20).y);     // extrapolate low
+  EXPECT_EQ(p0.y, Interpolate(p0, p1, p0.x).y); // x = x0
+  EXPECT_EQ(p1.y, Interpolate(p0, p1, p1.x).y); // x = x1
 }
 
 // Tests point with an undefined slope.
 TEST(InterpolateTest, UndefinedSlope) {
-  double x0 = 3;
-  double y0 = -1;
-  double x1 = 3;
-  double y1 = 12;
+  PointCartesian2D p0 = {3, -1};
+  PointCartesian2D p1 = {3, 12};
   EXPECT_THROW({
     try
     {
-      Interpolate(x0, y0, x1, y1, 0);
+      Interpolate(p0, p1, 0);
     }
     catch(const std::runtime_error& e)
     {

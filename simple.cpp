@@ -22,25 +22,24 @@ int Sum(int a, int b) {
  *
  *          slope = (y - y0) / (x - x0) = (y1 - y0) / (x1 - x0)
  *
- * @param x0  x-value of first known point
- * @param y0  y-value of first known point
- * @param x1  x-value of second known point
- * @param y1  y-value of second known point
+ * @param p0  (x, y) of first known point
+ * @param p1  (x, y) of second known point
  * @param x   x-value of point for which y is unknown
  *
- * @return linearly interpolated y-value at the given x
+ * @return new point with linearly interpolated y-value at the given x
  *
  * @throws Runtime error if slope between given points is undefined.
  */
-double Interpolate(double x0, double y0, double x1, double y1, double x) {
+PointCartesian2D Interpolate(PointCartesian2D p0, PointCartesian2D p1, double x) {
 
-  if (x1 == x0) {
+  if (p0.x == p1.x) {
     throw std::runtime_error(std::format(
       "Slope is undefined between ({}, {}) and ({}, {}). "
       "A y-value cannot be calculated between these points.",
-      x0, y0, x1, y1));
-    // return 0; // TODO how to indicate error?
+      p0.x, p0.y, p1.x, p1.y));
   }
+
+  double y = ((p0.y * (p1.x - x)) + (p1.y * (x - p0.x))) / (p1.x - p0.x);
   
-  return ((y0 * (x1 - x)) + (y1 * (x - x0))) / (x1 - x0);
+  return PointCartesian2D {x, y};
 }

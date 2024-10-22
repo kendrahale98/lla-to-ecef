@@ -17,12 +17,12 @@ to use these build instructions.
 ### Build and Run Program
 
 ```bash
-g++ -std=c++20 simple.cpp main.cpp -o simple-app; ./simple-app
+g++ -std=c++20 simple.cpp main.cpp -o simple-app.o; ./simple-app.o
 ```
 
 ### Build and Run Tests
 
 ```bash
-g++ -std=c++20 simple.cpp simple_unittest.cpp -lgtest -lgtest_main -o unit-test; ./unit-test
+g++ -std=c++20 simple.cpp simple_unittest.cpp -lgtest -lgtest_main -o unit-test.o; ./unit-test.o
 ```
 

@@ -117,3 +117,27 @@ PositionVelocityECEF ConvertLLAtoECEF(PositionLLA pos_lla, double a, double b, d
 double CalculateRadiusOfCurvature(double a, double e, double latitude) {
     return (a / std::sqrt(1 - (std::pow(e, 2) * std::pow(std::sin(latitude * DEG_TO_RAD), 2))));
 }
+
+void CalculateVelocityECEF(PositionVelocityECEF previous, PositionVelocityECEF* current) {
+    
+    if (!IsBefore(previous.t, current->t)) {
+      throw std::runtime_error(std::format(
+        "Current point must occur after previous point."));
+    }
+    
+    double time_diff = (current->t.tv_sec - previous.t.tv_sec)
+      + ((current->t.tv_nsec - previous.t.tv_nsec) / 1e-9);
+    current->v_x = (current->x - previous.x) / time_diff;
+    current->v_y = (current->y - previous.y) / time_diff;
+    current->v_z = (current->z - previous.z) / time_diff;
+}
+
+bool IsBefore(const timespec& t1, const timespec &t2) {
+    if (t1.tv_sec < t2.tv_sec) {
+        return true;
+    } else if (t1.tv_sec == t2.tv_sec) {
+        return (t1.tv_nsec < t2.tv_nsec);
+    } else {
+        return false;
+    }
+}

@@ -177,4 +177,56 @@ TEST(ConvertLLAtoECEFTest, Test) {
   }
 }
 
+// ============================================================================
+// Tests CalculateVelocityECEF().
+// ============================================================================
+
+TEST(CalculateVelocityECEF, Test) {
+  int len = 10;
+  
+  // Expected values
+  double expected_v_x = 0;
+  double expected_v_y = 1;
+  double expected_v_z[] = {
+    0, -500, -250, -125, -62.5, -31.25, -15.625, -7.8125, -3.90625, -1.953125
+  };
+
+  // Inputs
+  PositionVelocityECEF inputs[len];
+
+  timespec t0 = {1000, 1000};
+  inputs[0] = {t0, 5, -10, 1000};
+
+  for (int i = 1; i < len; i++) {
+    PositionVelocityECEF previous = inputs[i-1];
+    timespec t_i = {previous.t.tv_sec + 1, previous.t.tv_nsec};
+    inputs[i] = {t_i, previous.x, previous.y + 1, previous.z / 2};
+  }
+
+  // Get results and check
+  for (int i = 1; i < len; i++) {
+    EXPECT_DOUBLE_EQ(0, inputs[i].v_x);
+    EXPECT_DOUBLE_EQ(0, inputs[i].v_y);
+    EXPECT_DOUBLE_EQ(0, inputs[i].v_z);
+    CalculateVelocityECEF(inputs[i-1], &inputs[i]);
+    EXPECT_DOUBLE_EQ(expected_v_x, inputs[i].v_x);
+    EXPECT_DOUBLE_EQ(expected_v_y, inputs[i].v_y);
+    EXPECT_DOUBLE_EQ(expected_v_z[i], inputs[i].v_z);
+  }
+}
+
+// ============================================================================
+// Tests IsBefore().
+// ============================================================================
+
+TEST(IsBefore, Test) {
+  timespec early {1000, 1000};
+  timespec late {10000, 1000};
+
+  EXPECT_TRUE(IsBefore(early, late));
+  EXPECT_FALSE(IsBefore(late, early));
+  EXPECT_FALSE(IsBefore(late, late));
+  EXPECT_FALSE(IsBefore(early, early));
+}
+
 }  // namespace

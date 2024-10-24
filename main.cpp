@@ -1,21 +1,27 @@
-// A simple program to sum numbers and report it to the console.
-
+/**
+ * @file main.cpp
+ *
+ * @brief Program to ingest LLA position data and produce ECEF velocity points.
+ *
+ * @author Kendra Hale, <kendrahale98@gmail.com>
+ *
+ * @date 10/25/24
+ */
 #include <string>
 #include <vector>
 
-#include "simple.h"
+#include "./lla_to_ecef.h"
 
-// Main function, sums integers and prints outputs.
 int main() {
-  std::vector<PositionLLA> lla_data = ReadCSVFileLLA("./SciTec_code_problem_data.csv");
+  std::vector<PositionLLA> lla_data = read_csv_lla("./SciTec_code_problem_data.csv");
 
   timespec point_of_interest1 {1532334879, 40000000};
   timespec point_of_interest2 {1532335268, 0};
   timespec point_of_interest3 {1532334000, 0};
 
-  GetVelocityAtTime(lla_data, point_of_interest1, true);
-  GetVelocityAtTime(lla_data, point_of_interest2, true);
-  GetVelocityAtTime(lla_data, point_of_interest3, true);
+  get_ecef_vel_at_poi(lla_data, point_of_interest1, true);
+  get_ecef_vel_at_poi(lla_data, point_of_interest2, true);
+  get_ecef_vel_at_poi(lla_data, point_of_interest3, true);
 
 // Exact match found for timestamp: 1532334879 s, 40000000 ns
 //         ECEF velocity at timestamp is:

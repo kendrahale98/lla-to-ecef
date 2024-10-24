@@ -1,6 +1,10 @@
 // A simple program to sum numbers and report it to the console.
 
+#include <vector>
+
 #include <time.h>
+
+#define INDEX_ERR -1
 
 #ifndef SIMPLE_H_
 #define SIMPLE_H_
@@ -39,8 +43,18 @@ void CalculateVelocityECEF(PositionVelocityECEF previous, PositionVelocityECEF* 
 double CalculateRadiusOfCurvature(double a, double e, double latitude);
 
 // true if t1 is before t2
-bool IsBefore(const timespec& t1, const timespec &t2);
+bool IsBefore(const timespec& ts1, const timespec &ts2);
+
+bool IsEqual(const timespec& ts1, const timespec& ts2);
 
 double timespec_to_double(const timespec& ts);
+
+std::vector<PositionLLA> ReadCSVFileLLA(const std::string& filename);
+
+std::vector<int> SearchPoints(const std::vector<PositionLLA>& data, timespec point_of_interest);
+
+std::vector<double> InterpolateECEFVelocities(const PositionVelocityECEF& before, const PositionVelocityECEF& after, const timespec& point_of_interest);
+
+std::vector<double> GetVelocityAtTime(const std::vector<PositionLLA>& lla_data, const timespec& point_of_interest, const bool& print_output);
 
 #endif  // SIMPLE_H_

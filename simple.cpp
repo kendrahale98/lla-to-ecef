@@ -2,14 +2,18 @@
 
 #include <cmath>
 #include <format>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
-#include <math.h>
 #include <stdexcept>
+
+#include <math.h>
 
 #include "simple.h"
 #include "wgs84.h"
 
 #define DEG_TO_RAD M_PI / 180
+#define KM_TO_M 1000
 
 // Returns the sum of two integers.
 int Sum(int a, int b) {
@@ -132,16 +136,159 @@ void CalculateVelocityECEF(PositionVelocityECEF previous, PositionVelocityECEF* 
     current->v_z = (current->z - previous.z) / time_diff;
 }
 
-bool IsBefore(const timespec& t1, const timespec &t2) {
-    if (t1.tv_sec < t2.tv_sec) {
+bool IsBefore(const timespec& ts1, const timespec &ts2) {
+    if (ts1.tv_sec < ts2.tv_sec) {
         return true;
-    } else if (t1.tv_sec == t2.tv_sec) {
-        return (t1.tv_nsec < t2.tv_nsec);
+    } else if (ts1.tv_sec == ts2.tv_sec) {
+        return (ts1.tv_nsec < ts2.tv_nsec);
     } else {
         return false;
     }
 }
 
+bool IsEqual(const timespec& ts1, const timespec& ts2) {
+    return ts1.tv_sec == ts2.tv_sec && ts1.tv_nsec == ts2.tv_nsec;
+}
+
 double timespec_to_double(const timespec& ts) {
   return ts.tv_sec + (double)ts.tv_nsec / 1e9;
+}
+
+std::vector<int> SearchPoints(const std::vector<PositionLLA>& data, timespec point_of_interest) {
+    std::vector<int> indices {INDEX_ERR, INDEX_ERR, INDEX_ERR}; // before, at, after
+
+    int idx = 0;
+    for (const auto &entry : data) {
+        if (IsEqual(entry.t, point_of_interest)) {
+            indices[1] = idx;
+            break;
+        } else if (IsBefore(entry.t, point_of_interest)) {
+            idx++;
+            continue;
+        } else {
+            indices[0] = idx - 1;
+            indices[2] = idx;
+        }
+    }
+
+    return indices;
+}
+
+std::vector<double> InterpolateECEFVelocities(const PositionVelocityECEF& before, const PositionVelocityECEF& after, const timespec& point_of_interest) {
+    double t_before = timespec_to_double(before.t);
+    PointCartesian2D v_x_t_before {t_before, before.v_x};
+    PointCartesian2D v_y_t_before {t_before, before.v_y};
+    PointCartesian2D v_z_t_before {t_before, before.v_z};
+
+    double t_after = timespec_to_double(after.t);
+    PointCartesian2D v_x_t_after {t_after, after.v_x};
+    PointCartesian2D v_y_t_after {t_after, after.v_y};
+    PointCartesian2D v_z_t_after {t_after, after.v_z};
+
+    std::vector<double> result;
+    result.push_back(Interpolate(v_x_t_before, v_x_t_after, timespec_to_double(point_of_interest)).y);
+    result.push_back(Interpolate(v_y_t_before, v_y_t_after, timespec_to_double(point_of_interest)).y);
+    result.push_back(Interpolate(v_z_t_before, v_z_t_after, timespec_to_double(point_of_interest)).y);
+
+    return result;
+}
+
+std::vector<double> GetVelocityAtTime(const std::vector<PositionLLA>& lla_data, const timespec& point_of_interest, const bool& print_output) {
+  
+  // Search data for point of interest
+  std::vector<int> search_results = SearchPoints(lla_data, point_of_interest);
+
+  std::vector<double> velocity_result;
+  
+  // If no exact time match for point of interest was found, interpolate
+  if (search_results[1] == INDEX_ERR) {
+    if (print_output) {
+        std::cout << "No exact match found for timestamp: ";
+        std::cout << point_of_interest.tv_sec << " s, ";
+        std::cout << point_of_interest.tv_nsec << " ns";
+        std::cout << ". Interpolating from nearby points." << std::endl;
+    }
+    
+    // Get nearby points in ECEF
+    PositionVelocityECEF before_before = ConvertLLAtoECEF(lla_data[search_results[0] - 1], WGS84Params::A, WGS84Params::B, WGS84Params::E);
+    PositionVelocityECEF before = ConvertLLAtoECEF(lla_data[search_results[0]], WGS84Params::A, WGS84Params::B, WGS84Params::E);
+    PositionVelocityECEF after = ConvertLLAtoECEF(lla_data[search_results[2]], WGS84Params::A, WGS84Params::B, WGS84Params::E);
+
+    // Calculate velocity at nearby points
+    CalculateVelocityECEF(before_before, &before);
+    CalculateVelocityECEF(before, &after);
+
+    // Interpolate to find velocity at point of interest
+    velocity_result = InterpolateECEFVelocities(before, after, point_of_interest);
+
+  } else {
+    if (print_output) {
+        std::cout << "Exact match found for timestamp: ";
+        std::cout << point_of_interest.tv_sec << " s, ";
+        std::cout << point_of_interest.tv_nsec << " ns" << std::endl;
+    }
+    
+    PositionVelocityECEF pv_ecef_before_poi = ConvertLLAtoECEF(lla_data[search_results[1] - 1], WGS84Params::A, WGS84Params::B, WGS84Params::E);
+    PositionVelocityECEF pv_ecef_poi = ConvertLLAtoECEF(lla_data[search_results[1]], WGS84Params::A, WGS84Params::B, WGS84Params::E);
+    CalculateVelocityECEF(pv_ecef_before_poi, &pv_ecef_poi);
+
+    velocity_result = {pv_ecef_poi.v_x, pv_ecef_poi.v_y, pv_ecef_poi.v_z};
+  }
+
+  if (print_output) {
+      std::cout << "\tECEF velocity at timestamp is:" << std::endl;
+      std::cout << std::fixed << std::setprecision(15);
+      std::cout << "\t\tv_x [m/s]: " << velocity_result[0] << std::endl;
+      std::cout << "\t\tv_y [m/s]: " << velocity_result[1] << std::endl;
+      std::cout << "\t\tv_z [m/s]: " << velocity_result[2] << std::endl;
+      std::cout << std::endl;
+  }
+
+  return velocity_result;
+}
+
+std::vector<PositionLLA> ReadCSVFileLLA(const std::string& filename) {
+    std::ifstream file(filename);
+    std::vector<PositionLLA> lla_data;
+
+    if (file.is_open()) {
+        std::string line;
+        while (std::getline(file, line)) {
+            std::stringstream ss(line);
+            std::string value;
+            PositionLLA lla_entry;
+
+            int index = 0;
+            while(std::getline(ss, value, ',')) {
+                switch (index) {
+                    case 0: {
+                        std::string span = value;
+                        size_t pos = span.find('.');
+                        lla_entry.t.tv_sec = std::stol(span.substr(0, pos));
+                        lla_entry.t.tv_nsec = int (std::stod(span.substr(pos)) * 1e9);
+                        break;
+                    }
+                    case 1:
+                        lla_entry.latitude = std::stod(value);
+                        break;
+                    case 2:
+                        lla_entry.longitude = std::stod(value);
+                        break;
+                    case 3:
+                        lla_entry.altitude = std::stod(value) * KM_TO_M;
+                    default:
+                        break;
+                }
+                index++;
+            }
+
+            lla_data.push_back(lla_entry);
+        }
+
+        file.close();
+    } else {
+        std::cerr << "Error opening file." << std::endl;
+    }
+
+    return lla_data;
 }

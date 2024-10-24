@@ -191,6 +191,12 @@ std::vector<int> find_match_or_nearest(
     // Before, exact match, after
     std::vector<int> indices {INDEX_ERR, INDEX_ERR, INDEX_ERR};
 
+    // Exit if point of interest is out of range
+    if ((ts_is_before(point_of_interest, lla_data[0].t))
+            || ts_is_before(lla_data.back().t, point_of_interest) ) {
+        return indices;
+    }
+    
     int idx = 0;
     for (const auto &entry : lla_data) {
         if (ts_is_equal(entry.t, point_of_interest)) {

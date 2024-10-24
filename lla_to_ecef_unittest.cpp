@@ -64,6 +64,47 @@ TEST(read_csv_lla_test, TestBadRead) {
 }
 
 // ============================================================================
+// Tests find_match_or_nearest().
+// ============================================================================
+
+// Tests find_match_or_nearest when data range is valid for request.
+TEST(find_match_or_nearest_test, TestExpectGoodReturn) {
+  std::vector<PositionLLA> data;
+  data.push_back(PositionLLA {timespec {1000, 0}, 55, 75, 1500});
+  data.push_back(PositionLLA {timespec {1300, 0}, 55.4, 74, 1450});
+  data.push_back(PositionLLA {timespec {1500, 0}, 55.8, 73, 1450});
+  data.push_back(PositionLLA {timespec {1600, 0}, 56, 74, 1450});
+  data.push_back(PositionLLA {timespec {2000, 0}, 56.1, 75, 1450});
+
+  // Test a point with an exact match
+  timespec pt {data[2].t.tv_sec, data[2].t.tv_nsec};
+  std::vector<int> result = find_match_or_nearest(data, pt);
+  EXPECT_EQ(INDEX_ERR, result[0]);
+  EXPECT_EQ(2, result[1]);
+  EXPECT_EQ(INDEX_ERR, result[2]);
+
+  // Test a point without an exact match
+  pt.tv_nsec = 9000;
+  result = find_match_or_nearest(data, pt);
+  EXPECT_EQ(2, result[0]);
+  EXPECT_EQ(INDEX_ERR, result[1]);
+  EXPECT_EQ(3, result[2]);
+
+  // Test points out of range
+  pt.tv_sec = 500;
+  result = find_match_or_nearest(data, pt);
+  EXPECT_EQ(INDEX_ERR, result[0]);
+  EXPECT_EQ(INDEX_ERR, result[1]);
+  EXPECT_EQ(INDEX_ERR, result[2]);
+
+  pt.tv_sec = 2500;
+  result = find_match_or_nearest(data, pt);
+  EXPECT_EQ(INDEX_ERR, result[0]);
+  EXPECT_EQ(INDEX_ERR, result[1]);
+  EXPECT_EQ(INDEX_ERR, result[2]);
+}
+
+// ============================================================================
 // Tests get_rad_of_curvature().
 // ============================================================================
 

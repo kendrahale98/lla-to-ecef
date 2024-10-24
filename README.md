@@ -16,6 +16,8 @@ to use these build instructions.
 
 ### Build and Run Program
 
+The provided input data is hard-coded in `main.cpp`.
+
 ```bash
 g++ -std=c++20 lla_to_ecef.cpp time_utils.cpp main.cpp -o build/lla_to_ecef_run; ./build/lla_to_ecef_run
 ```

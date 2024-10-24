@@ -105,22 +105,6 @@ TEST(find_match_or_nearest_test, TestExpectGoodReturn) {
 }
 
 // ============================================================================
-// Tests get_rad_of_curvature().
-// ============================================================================
-
-// Tests get_rad_of_curvature at multiple latitude values.
-TEST(get_rad_of_curvature_test, Test) {
-  double a = std::sqrt(3) / 2;
-  double e = 0.5;
-
-  EXPECT_EQ(a, get_rad_of_curvature(a, e, 0));
-  EXPECT_EQ(1, get_rad_of_curvature(a, e, 90));
-  EXPECT_EQ(a, get_rad_of_curvature(a, e, 180));
-  EXPECT_EQ(1, get_rad_of_curvature(a, e, 270));
-  EXPECT_EQ(a, get_rad_of_curvature(a, e, 360));
-}
-
-// ============================================================================
 // Tests lla_to_ecef_pos().
 // ============================================================================
 
@@ -188,6 +172,22 @@ TEST(lla_to_ecef_pos_test, Test) {
       EXPECT_DOUBLE_EQ(0, result.v_z);
     }
   }
+}
+
+// ============================================================================
+// Tests get_rad_of_curvature().
+// ============================================================================
+
+// Tests get_rad_of_curvature at multiple latitude values.
+TEST(get_rad_of_curvature_test, Test) {
+  double a = std::sqrt(3) / 2;
+  double e = 0.5;
+
+  EXPECT_EQ(a, get_rad_of_curvature(a, e, 0));
+  EXPECT_EQ(1, get_rad_of_curvature(a, e, 90));
+  EXPECT_EQ(a, get_rad_of_curvature(a, e, 180));
+  EXPECT_EQ(1, get_rad_of_curvature(a, e, 270));
+  EXPECT_EQ(a, get_rad_of_curvature(a, e, 360));
 }
 
 // ============================================================================

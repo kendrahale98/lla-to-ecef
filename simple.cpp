@@ -83,7 +83,7 @@ PointCartesian2D Interpolate(PointCartesian2D p0, PointCartesian2D p1, double x)
  *                  - x, y, and z ECEF velocities are left uninitialized
  */
 PositionVelocityECEF ConvertLLAtoECEF(PositionLLA pos_lla, double a, double b, double e) {
-    double rad_of_curve = RadiusOfCurvature(a, e, pos_lla.latitude);
+    double rad_of_curve = CalculateRadiusOfCurvature(a, e, pos_lla.latitude);
 
     double cos_lat = std::cos(pos_lla.latitude * DEG_TO_RAD);
     double sin_lat = std::sin(pos_lla.latitude * DEG_TO_RAD);
@@ -98,7 +98,7 @@ PositionVelocityECEF ConvertLLAtoECEF(PositionLLA pos_lla, double a, double b, d
 }
 
 /**
- * RadiusOfCurvature
+ * CalculateRadiusOfCurvature
  * @brief Calculates a radius of curvature for conversion between LLA and ECEF.
  *
  * Uses the formula:
@@ -114,6 +114,6 @@ PositionVelocityECEF ConvertLLAtoECEF(PositionLLA pos_lla, double a, double b, d
  *
  * @return the calculated radius of curvature in meters
  */
-double RadiusOfCurvature(double a, double e, double latitude) {
+double CalculateRadiusOfCurvature(double a, double e, double latitude) {
     return (a / std::sqrt(1 - (std::pow(e, 2) * std::pow(std::sin(latitude * DEG_TO_RAD), 2))));
 }

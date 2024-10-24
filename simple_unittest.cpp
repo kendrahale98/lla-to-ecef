@@ -92,19 +92,19 @@ TEST(InterpolateTest, UndefinedSlope) {
 }
 
 // ============================================================================
-// Tests RadiusOfCurvature().
+// Tests CalculateRadiusOfCurvature().
 // ============================================================================
 
-// Tests RadiusOfCurvature at multiple latitude values.
-TEST(RadiusOfCurvatureTest, Test) {
+// Tests CalculateRadiusOfCurvature at multiple latitude values.
+TEST(CalculateRadiusOfCurvatureTest, Test) {
   double a = std::sqrt(3) / 2;
   double e = 0.5;
 
-  EXPECT_EQ(a, RadiusOfCurvature(a, e, 0));
-  EXPECT_EQ(1, RadiusOfCurvature(a, e, 90));
-  EXPECT_EQ(a, RadiusOfCurvature(a, e, 180));
-  EXPECT_EQ(1, RadiusOfCurvature(a, e, 270));
-  EXPECT_EQ(a, RadiusOfCurvature(a, e, 360));
+  EXPECT_EQ(a, CalculateRadiusOfCurvature(a, e, 0));
+  EXPECT_EQ(1, CalculateRadiusOfCurvature(a, e, 90));
+  EXPECT_EQ(a, CalculateRadiusOfCurvature(a, e, 180));
+  EXPECT_EQ(1, CalculateRadiusOfCurvature(a, e, 270));
+  EXPECT_EQ(a, CalculateRadiusOfCurvature(a, e, 360));
 }
 
 // ============================================================================

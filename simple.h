@@ -34,6 +34,8 @@ PointCartesian2D Interpolate(PointCartesian2D p0, PointCartesian2D p1, double x)
 
 PositionVelocityECEF ConvertLLAtoECEF(PositionLLA pos_lla, double a, double b, double e);
 
-double RadiusOfCurvature(double a, double e, double latitude);
+void CalculateVelocityECEF(PositionVelocityECEF previous, PositionVelocityECEF* current);
+
+double CalculateRadiusOfCurvature(double a, double e, double latitude);
 
 #endif  // SIMPLE_H_

@@ -124,7 +124,7 @@ double CalculateRadiusOfCurvature(double a, double e, double latitude) {
 
 void CalculateVelocityECEF(PositionVelocityECEF previous, PositionVelocityECEF* current) {
     
-    if (!IsBefore(previous.t, current->t)) {
+    if (!ts_is_before(previous.t, current->t)) {
       throw std::runtime_error(std::format(
         "Current point must occur after previous point."));
     }
@@ -136,33 +136,33 @@ void CalculateVelocityECEF(PositionVelocityECEF previous, PositionVelocityECEF* 
     current->v_z = (current->z - previous.z) / time_diff;
 }
 
-bool IsBefore(const timespec& ts1, const timespec &ts2) {
-    if (ts1.tv_sec < ts2.tv_sec) {
-        return true;
-    } else if (ts1.tv_sec == ts2.tv_sec) {
-        return (ts1.tv_nsec < ts2.tv_nsec);
-    } else {
-        return false;
-    }
-}
+// bool ts_is_before(const timespec& ts1, const timespec &ts2) {
+//     if (ts1.tv_sec < ts2.tv_sec) {
+//         return true;
+//     } else if (ts1.tv_sec == ts2.tv_sec) {
+//         return (ts1.tv_nsec < ts2.tv_nsec);
+//     } else {
+//         return false;
+//     }
+// }
 
-bool IsEqual(const timespec& ts1, const timespec& ts2) {
-    return ts1.tv_sec == ts2.tv_sec && ts1.tv_nsec == ts2.tv_nsec;
-}
+// bool IsEqual(const timespec& ts1, const timespec& ts2) {
+//     return ts1.tv_sec == ts2.tv_sec && ts1.tv_nsec == ts2.tv_nsec;
+// }
 
-double timespec_to_double(const timespec& ts) {
-  return ts.tv_sec + (double)ts.tv_nsec / 1e9;
-}
+// double ts_to_double(const timespec& ts) {
+//   return ts.tv_sec + (double)ts.tv_nsec / 1e9;
+// }
 
 std::vector<int> SearchPoints(const std::vector<PositionLLA>& data, timespec point_of_interest) {
     std::vector<int> indices {INDEX_ERR, INDEX_ERR, INDEX_ERR}; // before, at, after
 
     int idx = 0;
     for (const auto &entry : data) {
-        if (IsEqual(entry.t, point_of_interest)) {
+        if (ts_is_equal(entry.t, point_of_interest)) {
             indices[1] = idx;
             break;
-        } else if (IsBefore(entry.t, point_of_interest)) {
+        } else if (ts_is_before(entry.t, point_of_interest)) {
             idx++;
             continue;
         } else {
@@ -175,20 +175,20 @@ std::vector<int> SearchPoints(const std::vector<PositionLLA>& data, timespec poi
 }
 
 std::vector<double> InterpolateECEFVelocities(const PositionVelocityECEF& before, const PositionVelocityECEF& after, const timespec& point_of_interest) {
-    double t_before = timespec_to_double(before.t);
+    double t_before = ts_to_double(before.t);
     PointCartesian2D v_x_t_before {t_before, before.v_x};
     PointCartesian2D v_y_t_before {t_before, before.v_y};
     PointCartesian2D v_z_t_before {t_before, before.v_z};
 
-    double t_after = timespec_to_double(after.t);
+    double t_after = ts_to_double(after.t);
     PointCartesian2D v_x_t_after {t_after, after.v_x};
     PointCartesian2D v_y_t_after {t_after, after.v_y};
     PointCartesian2D v_z_t_after {t_after, after.v_z};
 
     std::vector<double> result;
-    result.push_back(Interpolate(v_x_t_before, v_x_t_after, timespec_to_double(point_of_interest)).y);
-    result.push_back(Interpolate(v_y_t_before, v_y_t_after, timespec_to_double(point_of_interest)).y);
-    result.push_back(Interpolate(v_z_t_before, v_z_t_after, timespec_to_double(point_of_interest)).y);
+    result.push_back(Interpolate(v_x_t_before, v_x_t_after, ts_to_double(point_of_interest)).y);
+    result.push_back(Interpolate(v_y_t_before, v_y_t_after, ts_to_double(point_of_interest)).y);
+    result.push_back(Interpolate(v_z_t_before, v_z_t_after, ts_to_double(point_of_interest)).y);
 
     return result;
 }

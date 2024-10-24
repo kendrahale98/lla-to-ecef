@@ -1,8 +1,11 @@
 // A simple program to sum numbers and report it to the console.
 
+#include <string>
 #include <vector>
 
 #include <time.h>
+
+#include "time_utils.h"
 
 #define INDEX_ERR -1
 
@@ -43,11 +46,11 @@ void CalculateVelocityECEF(PositionVelocityECEF previous, PositionVelocityECEF* 
 double CalculateRadiusOfCurvature(double a, double e, double latitude);
 
 // true if t1 is before t2
-bool IsBefore(const timespec& ts1, const timespec &ts2);
+// bool ts_is_before(const timespec& ts1, const timespec &ts2);
 
-bool IsEqual(const timespec& ts1, const timespec& ts2);
+// bool ts_is_equal(const timespec& ts1, const timespec& ts2);
 
-double timespec_to_double(const timespec& ts);
+// double ts_to_double(const timespec& ts);
 
 std::vector<PositionLLA> ReadCSVFileLLA(const std::string& filename);
 

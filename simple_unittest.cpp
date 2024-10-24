@@ -215,18 +215,4 @@ TEST(CalculateVelocityECEF, Test) {
   }
 }
 
-// ============================================================================
-// Tests IsBefore().
-// ============================================================================
-
-TEST(IsBefore, Test) {
-  timespec early {1000, 1000};
-  timespec late {10000, 1000};
-
-  EXPECT_TRUE(IsBefore(early, late));
-  EXPECT_FALSE(IsBefore(late, early));
-  EXPECT_FALSE(IsBefore(late, late));
-  EXPECT_FALSE(IsBefore(early, early));
-}
-
 }  // namespace

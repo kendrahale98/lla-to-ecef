@@ -15,12 +15,6 @@
 #define DEG_TO_RAD M_PI / 180
 #define KM_TO_M 1000
 
-// Returns the sum of two integers.
-int Sum(int a, int b) {
-    int sum = a + b;
-    return sum;
-}
-
 /**
  * Interpolate
  * @brief Performs linear interpolation for y, given two known points,

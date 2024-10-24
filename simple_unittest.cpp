@@ -1,13 +1,19 @@
 // A simple unit test file to build upon later.
 
+#include <cmath>
 #include <stdexcept>
 
 #include "simple.h"
 
 #include "gtest/gtest.h"
+
+#define NEAR_TOL 1e-10
+
 namespace {
 
+// ============================================================================
 // Tests Sum().
+// ============================================================================
 
 // Tests sum of positive numbers.
 TEST(SumTest, Positive) {
@@ -27,7 +33,9 @@ TEST(SumTest, Both) {
   EXPECT_EQ(-4, Sum(8, -12));
 }
 
+// ============================================================================
 // Tests Interpolate().
+// ============================================================================
 
 // Tests points with a positive slope.
 TEST(InterpolateTest, PositiveSlope) {
@@ -81,6 +89,92 @@ TEST(InterpolateTest, UndefinedSlope) {
       throw;
     }
   }, std::runtime_error);
+}
+
+// ============================================================================
+// Tests RadiusOfCurvature().
+// ============================================================================
+
+// Tests RadiusOfCurvature at multiple latitude values.
+TEST(RadiusOfCurvatureTest, Test) {
+  double a = std::sqrt(3) / 2;
+  double e = 0.5;
+
+  EXPECT_EQ(a, RadiusOfCurvature(a, e, 0));
+  EXPECT_EQ(1, RadiusOfCurvature(a, e, 90));
+  EXPECT_EQ(a, RadiusOfCurvature(a, e, 180));
+  EXPECT_EQ(1, RadiusOfCurvature(a, e, 270));
+  EXPECT_EQ(a, RadiusOfCurvature(a, e, 360));
+}
+
+// ============================================================================
+// Tests ConvertLLAtoECEF().
+// ============================================================================
+
+// Test that PositionVelocityECEF is initialized to zero.
+TEST(ConvertLLAtoECEFTest, TestZeroInitialization) {
+  PositionVelocityECEF result;
+  EXPECT_EQ(0, result.t.tv_sec);
+  EXPECT_EQ(0, result.t.tv_nsec);
+  EXPECT_DOUBLE_EQ(0, result.x);
+  EXPECT_DOUBLE_EQ(0, result.y);
+  EXPECT_DOUBLE_EQ(0, result.z);
+  EXPECT_DOUBLE_EQ(0, result.v_x);
+  EXPECT_DOUBLE_EQ(0, result.v_y);
+  EXPECT_DOUBLE_EQ(0, result.v_z);
+}
+
+// Tests ConvertLLAtoECEF at multiple lat/long value pairs.
+TEST(ConvertLLAtoECEFTest, Test) {
+  // Inputs
+  int sec = 1729728453;
+  int nsec = 9000;
+  timespec t_test {sec, nsec};
+  
+  double a = std::sqrt(3) / 2;
+  double b = 3;
+  double e = 0.5;
+  double h = 1;
+
+  double angles[] = {0, 90, 180, 270, 360};
+  int len = sizeof(angles) / sizeof(angles[0]);
+
+  // Expected values
+  double a_plus_h = a + h;
+  double expected_x[len][len] = {
+    {a_plus_h, 0, -1 * a_plus_h, 0, a_plus_h},
+    {0, 0, 0, 0, 0},
+    {-1 * a_plus_h, 0, a_plus_h, 0, -1 * a_plus_h},
+    { 0, 0, 0, 0, 0},
+    {a_plus_h, 0, -1 * a_plus_h, 0, a_plus_h}
+  };
+  double expected_y[len][len] = {
+    {0, a_plus_h, 0, -1 * a_plus_h, 0},
+    {0, 0, 0, 0, 0},
+    {0, -1 * a_plus_h, 0, a_plus_h, 0},
+    {0, 0, 0, 0, 0},
+    {0, a_plus_h, 0, -1 * a_plus_h, 0}
+  };
+  double b_sq_ovr_a_sq_plus_h = (std::pow(b, 2) / std::pow(a, 2)) + h;
+  double expected_z[len] = {
+    0, b_sq_ovr_a_sq_plus_h, 0, -1 * b_sq_ovr_a_sq_plus_h, 0
+  };
+
+  // Test
+  for (int i = 0; i < len; i++) {
+    for (int j = 0; j < len; j++) {
+      PositionLLA pos_lla {t_test, angles[i], angles[j], h};
+      PositionVelocityECEF result = ConvertLLAtoECEF(pos_lla, a, b, e);
+      EXPECT_EQ(sec, result.t.tv_sec);
+      EXPECT_EQ(nsec, result.t.tv_nsec);
+      EXPECT_NEAR(expected_x[i][j], result.x, NEAR_TOL);
+      EXPECT_NEAR(expected_y[i][j], result.y, NEAR_TOL);
+      EXPECT_NEAR(expected_z[i], result.z, NEAR_TOL);
+      EXPECT_DOUBLE_EQ(0, result.v_x);
+      EXPECT_DOUBLE_EQ(0, result.v_y);
+      EXPECT_DOUBLE_EQ(0, result.v_z);
+    }
+  }
 }
 
 }  // namespace

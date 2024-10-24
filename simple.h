@@ -11,25 +11,29 @@ struct PointCartesian2D {
 };
 
 struct PositionLLA {
-    struct timespec t;  // time since Unix epoch
-    double latitutde;   // degrees
-    double longitude;   // degrees
-    double altitude;    // kilometers
+    struct timespec t {0, 0};   // time since Unix epoch
+    double latitude = 0;        // degrees
+    double longitude = 0;       // degrees
+    double altitude = 0;        // kilometers
 };
 
 struct PositionVelocityECEF {
-    struct timespec t;  // time since Unix epoch
-    double x;           // kilometers
-    double y;           // kilometers
-    double z;           // kilometers
-    double v_x;         // kilometers/second
-    double v_y;         // kilometers/second
-    double v_z;         // kilometers/second
+    struct timespec t {0, 0};   // time since Unix epoch
+    double x = 0;               // kilometers
+    double y = 0;               // kilometers
+    double z = 0;               // kilometers
+    double v_x = 0;             // kilometers/second
+    double v_y = 0;             // kilometers/second
+    double v_z = 0;             // kilometers/second
 };
 
 // Returns the sum of the given integers.
 int Sum(int a, int b);
 
 PointCartesian2D Interpolate(PointCartesian2D p0, PointCartesian2D p1, double x);
+
+PositionVelocityECEF ConvertLLAtoECEF(PositionLLA pos_lla, double a, double b, double e);
+
+double RadiusOfCurvature(double a, double e, double latitude);
 
 #endif  // SIMPLE_H_

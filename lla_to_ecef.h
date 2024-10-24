@@ -1,5 +1,12 @@
-// A simple program to sum numbers and report it to the console.
-
+/**
+ * @file lla_to_ecef.h
+ *
+ * @brief Functions for conversion from LLA->ECEF, and ECEF velocity calculations.
+ *
+ * @author Kendra Hale, <kendrahale98@gmail.com>
+ *
+ * @date 10/25/24
+ */
 #include <time.h>
 
 #include <string>

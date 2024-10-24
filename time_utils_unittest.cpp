@@ -1,5 +1,12 @@
-// Unit tests for functions in time_utils.
-
+/**
+ * @file time_utils_unittest.cpp
+ *
+ * @brief Unit tests for time_utils functions, using Google Test.
+ *
+ * @author Kendra Hale, <kendrahale98@gmail.com>
+ *
+ * @date 10/25/24
+ */
 #include "./time_utils.h"
 
 #include "gtest/gtest.h"

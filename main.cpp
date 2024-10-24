@@ -74,14 +74,60 @@ int main() {
 
     CalculateVelocityECEF(ecef_data[index - 1], &ecef_data[index]);
 
-    std::cout << "(" << ecef_data[index].t.tv_sec << "," << ecef_data[index].t.tv_nsec << ")\t";
-    std::cout << std::fixed << std::setprecision(10);
-    std::cout << ecef_data[index].x << "\t" << ecef_data[index].y << "\t" << ecef_data[index].z << "\t";
-    std::cout << ecef_data[index].v_x << "\t" << ecef_data[index].v_y << "\t" << ecef_data[index].v_z;
-    std::cout << std::endl;
+    // std::cout << "(" << ecef_data[index].t.tv_sec << "," << ecef_data[index].t.tv_nsec << ")\t";
+    // std::cout << std::fixed << std::setprecision(10);
+    // std::cout << ecef_data[index].x << "\t" << ecef_data[index].y << "\t" << ecef_data[index].z << "\t";
+    // std::cout << ecef_data[index].v_x << "\t" << ecef_data[index].v_y << "\t" << ecef_data[index].v_z;
+    // std::cout << std::endl;
 
     index++;
   }
+
+  timespec poi_ts {1532335268, 0};
+  // timespec poi_ts {1532334000, 0};
+
+  int idx_before_poi;
+  int idx_after_poi;
+
+  int idx = 0;
+  for (const auto &entry : lla_data) {
+    if (IsBefore(entry.t, poi_ts)) {
+      idx++;
+      continue;
+    } else {
+      idx_after_poi = idx;
+      idx_before_poi = idx - 1;
+    }
+  }
+
+  PositionVelocityECEF before_before = ConvertLLAtoECEF(lla_data[idx_before_poi - 1], WGS84Params::A, WGS84Params::B, WGS84Params::E);
+  PositionVelocityECEF before = ConvertLLAtoECEF(lla_data[idx_before_poi], WGS84Params::A, WGS84Params::B, WGS84Params::E);
+  PositionVelocityECEF after = ConvertLLAtoECEF(lla_data[idx_after_poi], WGS84Params::A, WGS84Params::B, WGS84Params::E);
+
+  CalculateVelocityECEF(before_before, &before);
+  CalculateVelocityECEF(before, &after);
+
+  double t_before = timespec_to_double(before.t);
+  PointCartesian2D v_x_t_before {before.v_x, t_before};
+  PointCartesian2D v_y_t_before {before.v_y, t_before};
+  PointCartesian2D v_z_t_before {before.v_z, t_before};
+
+  double t_after = timespec_to_double(before.t);
+  PointCartesian2D v_x_t_after {after.v_x, t_after};
+  PointCartesian2D v_y_t_after {after.v_y, t_after};
+  PointCartesian2D v_z_t_after {after.v_z, t_after};
+
+  double result_v_x = Interpolate(v_x_t_before, v_x_t_after, timespec_to_double(poi_ts)).y;
+  double result_v_y = Interpolate(v_y_t_before, v_y_t_after, timespec_to_double(poi_ts)).y;
+  double result_v_z = Interpolate(v_z_t_before, v_z_t_after, timespec_to_double(poi_ts)).y;
+
+  std::cout << std::fixed << std::setprecision(10);
+  std::cout << result_v_x << "\t" << result_v_y << "\t" << result_v_z;
+  std::cout << std::endl;
+
+
+  // 1532333672.6644752026   1532334037.8173997402   1532333564.3896265030
+  // 1532335244.9414927959   1532335296.9903407097   1532335291.3677251339
 
   return 0;
 }

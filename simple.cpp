@@ -141,3 +141,7 @@ bool IsBefore(const timespec& t1, const timespec &t2) {
         return false;
     }
 }
+
+double timespec_to_double(const timespec& ts) {
+  return ts.tv_sec + (double)ts.tv_nsec / 1e9;
+}

@@ -38,6 +38,9 @@ void CalculateVelocityECEF(PositionVelocityECEF previous, PositionVelocityECEF* 
 
 double CalculateRadiusOfCurvature(double a, double e, double latitude);
 
+// true if t1 is before t2
 bool IsBefore(const timespec& t1, const timespec &t2);
+
+double timespec_to_double(const timespec& ts);
 
 #endif  // SIMPLE_H_

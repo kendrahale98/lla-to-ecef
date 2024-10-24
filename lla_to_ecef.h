@@ -5,11 +5,10 @@
 #include <string>
 #include <vector>
 
-// #include <time.h>
-
 #include "./time_utils.h"
 
 #define INDEX_ERR -1
+#define KM_TO_M 1000
 
 #ifndef LLA_TO_ECEF_H_
 #define LLA_TO_ECEF_H_

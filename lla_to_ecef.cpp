@@ -15,7 +15,6 @@
 #include "./wgs84.h"
 
 #define DEG_TO_RAD M_PI / 180
-#define KM_TO_M 1000
 
 /**
  * read_csv_lla

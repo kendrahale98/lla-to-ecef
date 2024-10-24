@@ -19,56 +19,45 @@
 namespace {
 
 // ============================================================================
-// Tests interpolate_2d().
+// Tests read_csv_lla().
 // ============================================================================
 
-// Tests points with a positive slope.
-TEST(interpolate_2dTest, PositiveSlope) {
-  PointCartesian2D p0 = {1, 1};
-  PointCartesian2D p1 = {7, 4};
-  EXPECT_EQ(3, interpolate_2d(p0, p1, 5).y);        // interpolate
-  EXPECT_EQ(3, interpolate_2d(p1, p0, 5).y);        // interp. w/switched order
-  EXPECT_EQ(5, interpolate_2d(p0, p1, 9).y);        // extrapolate high
-  EXPECT_EQ(-9.5, interpolate_2d(p0, p1, -20).y);   // extrapolate low
-  EXPECT_EQ(p0.y, interpolate_2d(p0, p1, p0.x).y);  // x = x0
-  EXPECT_EQ(p1.y, interpolate_2d(p0, p1, p1.x).y);  // x = x1
+// Test successful read.
+TEST(read_csv_lla_test, TestGoodRead) {
+  std::vector<PositionLLA> data = read_csv_lla("./test_data.csv");
+
+  // Check length
+  EXPECT_EQ(27, data.size());
+
+  // Check data at a few points
+  timespec ts {1532332919, 40000000};
+  double lat = 53.379023557853734871514462;
+  double lon = -6.709789746339143157172202;
+  double alt = 50.037492251246234786776768 * KM_TO_M;
+  EXPECT_TRUE(ts_is_equal(ts, data[0].t));
+  EXPECT_DOUBLE_EQ(lat, data[0].latitude);
+  EXPECT_DOUBLE_EQ(lon, data[0].longitude);
+  EXPECT_DOUBLE_EQ(alt, data[0].altitude);
+
+  ts.tv_sec = 1532333049;
+  lat = 53.579132406588414028192346;
+  lon = -11.274580378310924189122488;
+  alt = 537.048475586836275397217833 * KM_TO_M;
+  EXPECT_TRUE(ts_is_equal(ts, data[26].t));
+  EXPECT_DOUBLE_EQ(lat, data[26].latitude);
+  EXPECT_DOUBLE_EQ(lon, data[26].longitude);
+  EXPECT_DOUBLE_EQ(alt, data[26].altitude);
 }
 
-// Tests points with a negative slope.
-TEST(interpolate_2dTest, NegativeSlope) {
-  PointCartesian2D p0 = {-1, 20};
-  PointCartesian2D p1 = {6, -15};
-  EXPECT_EQ(15, interpolate_2d(p0, p1, 0).y);       // interpolate
-  EXPECT_EQ(15, interpolate_2d(p1, p0, 0).y);       // interp. w/switched order
-  EXPECT_EQ(-27.5, interpolate_2d(p0, p1, 8.5).y);  // extrapolate high
-  EXPECT_EQ(115, interpolate_2d(p0, p1, -20).y);    // extrapolate low
-  EXPECT_EQ(p0.y, interpolate_2d(p0, p1, p0.x).y);  // x = x0
-  EXPECT_EQ(p1.y, interpolate_2d(p0, p1, p1.x).y);  // x = x1
-}
-
-// Tests points with a zero slope.
-TEST(interpolate_2dTest, ZeroSlope) {
-  PointCartesian2D p0 = {-4, 9};
-  PointCartesian2D p1 = {7, 9};
-  EXPECT_EQ(9, interpolate_2d(p0, p1, 0).y);        // interpolate
-  EXPECT_EQ(9, interpolate_2d(p1, p0, 0).y);        // interp. w/switched order
-  EXPECT_EQ(9, interpolate_2d(p0, p1, 8.5).y);      // extrapolate high
-  EXPECT_EQ(9, interpolate_2d(p0, p1, -20).y);      // extrapolate low
-  EXPECT_EQ(p0.y, interpolate_2d(p0, p1, p0.x).y);  // x = x0
-  EXPECT_EQ(p1.y, interpolate_2d(p0, p1, p1.x).y);  // x = x1
-}
-
-// Tests point with an undefined slope.
-TEST(interpolate_2dTest, UndefinedSlope) {
-  PointCartesian2D p0 = {3, -1};
-  PointCartesian2D p1 = {3, 12};
+// Test unsuccessful read.
+TEST(read_csv_lla_test, TestBadRead) {
   EXPECT_THROW({
     try {
-      interpolate_2d(p0, p1, 0);
+      std::vector<PositionLLA> data = read_csv_lla("./bad_file.csv");
     }
     catch(const std::runtime_error& e) {
       EXPECT_STREQ(
-        "Slope is undefined between (3, -1) and (3, 12). A y-value cannot be calculated between these points.", e.what());
+        "Could not open file ./bad_file.csv. Exiting", e.what());
       throw;
     }
   }, std::runtime_error);
@@ -79,7 +68,7 @@ TEST(interpolate_2dTest, UndefinedSlope) {
 // ============================================================================
 
 // Tests get_rad_of_curvature at multiple latitude values.
-TEST(get_rad_of_curvatureTest, Test) {
+TEST(get_rad_of_curvature_test, Test) {
   double a = std::sqrt(3) / 2;
   double e = 0.5;
 
@@ -95,7 +84,7 @@ TEST(get_rad_of_curvatureTest, Test) {
 // ============================================================================
 
 // Test that PositionVelocityECEF is initialized to zero.
-TEST(lla_to_ecef_posTest, TestZeroInitialization) {
+TEST(lla_to_ecef_pos_test, TestZeroInitialization) {
   PositionVelocityECEF result;
   EXPECT_EQ(0, result.t.tv_sec);
   EXPECT_EQ(0, result.t.tv_nsec);
@@ -108,7 +97,7 @@ TEST(lla_to_ecef_posTest, TestZeroInitialization) {
 }
 
 // Tests lla_to_ecef_pos at multiple lat/long value pairs.
-TEST(lla_to_ecef_posTest, Test) {
+TEST(lla_to_ecef_pos_test, Test) {
   // Inputs
   int sec = 1729728453;
   int nsec = 9000;
@@ -164,7 +153,7 @@ TEST(lla_to_ecef_posTest, Test) {
 // Tests get_vel_ecef().
 // ============================================================================
 
-TEST(get_vel_ecef, Test) {
+TEST(get_vel_ecef_test, Test) {
   const int len = 10;
 
   // Expected values
@@ -196,6 +185,62 @@ TEST(get_vel_ecef, Test) {
     EXPECT_DOUBLE_EQ(expected_v_y, inputs[i].v_y);
     EXPECT_DOUBLE_EQ(expected_v_z[i], inputs[i].v_z);
   }
+}
+
+// ============================================================================
+// Tests interpolate_2d().
+// ============================================================================
+
+// Tests points with a positive slope.
+TEST(interpolate_2d_test, PositiveSlope) {
+  PointCartesian2D p0 = {1, 1};
+  PointCartesian2D p1 = {7, 4};
+  EXPECT_EQ(3, interpolate_2d(p0, p1, 5).y);        // interpolate
+  EXPECT_EQ(3, interpolate_2d(p1, p0, 5).y);        // interp. w/switched order
+  EXPECT_EQ(5, interpolate_2d(p0, p1, 9).y);        // extrapolate high
+  EXPECT_EQ(-9.5, interpolate_2d(p0, p1, -20).y);   // extrapolate low
+  EXPECT_EQ(p0.y, interpolate_2d(p0, p1, p0.x).y);  // x = x0
+  EXPECT_EQ(p1.y, interpolate_2d(p0, p1, p1.x).y);  // x = x1
+}
+
+// Tests points with a negative slope.
+TEST(interpolate_2d_test, NegativeSlope) {
+  PointCartesian2D p0 = {-1, 20};
+  PointCartesian2D p1 = {6, -15};
+  EXPECT_EQ(15, interpolate_2d(p0, p1, 0).y);       // interpolate
+  EXPECT_EQ(15, interpolate_2d(p1, p0, 0).y);       // interp. w/switched order
+  EXPECT_EQ(-27.5, interpolate_2d(p0, p1, 8.5).y);  // extrapolate high
+  EXPECT_EQ(115, interpolate_2d(p0, p1, -20).y);    // extrapolate low
+  EXPECT_EQ(p0.y, interpolate_2d(p0, p1, p0.x).y);  // x = x0
+  EXPECT_EQ(p1.y, interpolate_2d(p0, p1, p1.x).y);  // x = x1
+}
+
+// Tests points with a zero slope.
+TEST(interpolate_2d_test, ZeroSlope) {
+  PointCartesian2D p0 = {-4, 9};
+  PointCartesian2D p1 = {7, 9};
+  EXPECT_EQ(9, interpolate_2d(p0, p1, 0).y);        // interpolate
+  EXPECT_EQ(9, interpolate_2d(p1, p0, 0).y);        // interp. w/switched order
+  EXPECT_EQ(9, interpolate_2d(p0, p1, 8.5).y);      // extrapolate high
+  EXPECT_EQ(9, interpolate_2d(p0, p1, -20).y);      // extrapolate low
+  EXPECT_EQ(p0.y, interpolate_2d(p0, p1, p0.x).y);  // x = x0
+  EXPECT_EQ(p1.y, interpolate_2d(p0, p1, p1.x).y);  // x = x1
+}
+
+// Tests point with an undefined slope.
+TEST(interpolate_2d_test, UndefinedSlope) {
+  PointCartesian2D p0 = {3, -1};
+  PointCartesian2D p1 = {3, 12};
+  EXPECT_THROW({
+    try {
+      interpolate_2d(p0, p1, 0);
+    }
+    catch(const std::runtime_error& e) {
+      EXPECT_STREQ(
+        "Slope is undefined between (3, -1) and (3, 12). A y-value cannot be calculated between these points.", e.what());
+      throw;
+    }
+  }, std::runtime_error);
 }
 
 }  // namespace

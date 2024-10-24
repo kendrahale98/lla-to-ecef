@@ -11,6 +11,7 @@
 #include <stdexcept>
 
 #include "./lla_to_ecef.h"
+#include "./wgs84.h"
 
 #include "gtest/gtest.h"
 
@@ -120,6 +121,28 @@ TEST(lla_to_ecef_pos_test, TestZeroInitialization) {
   EXPECT_DOUBLE_EQ(0, result.x);
   EXPECT_DOUBLE_EQ(0, result.y);
   EXPECT_DOUBLE_EQ(0, result.z);
+  EXPECT_DOUBLE_EQ(0, result.v_x);
+  EXPECT_DOUBLE_EQ(0, result.v_y);
+  EXPECT_DOUBLE_EQ(0, result.v_z);
+}
+
+// Tests at a point with realistic values.
+TEST(lla_to_ecef_pos_test, TestRealisticInput) {
+  double test_tol = 1e-4;
+
+  PositionLLA in {
+    timespec {1532334879, 40000000},
+    46.2159884893476,
+    -62.4089793222041,
+    2089319.48641661
+  };
+
+  PositionVelocityECEF result = lla_to_ecef_pos(
+    in, WGS84Params::A, WGS84Params::B, WGS84Params::E);
+  EXPECT_TRUE(ts_is_equal(in.t, result.t));
+  EXPECT_NEAR(2717206.9203, result.x, test_tol);
+  EXPECT_NEAR(-5199521.9869, result.y, test_tol);
+  EXPECT_NEAR(6090283.4011, result.z, test_tol);
   EXPECT_DOUBLE_EQ(0, result.v_x);
   EXPECT_DOUBLE_EQ(0, result.v_y);
   EXPECT_DOUBLE_EQ(0, result.v_z);

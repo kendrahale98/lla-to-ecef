@@ -15,13 +15,11 @@
 int main() {
   std::vector<PositionLLA> lla_data = read_csv_lla("./SciTec_code_problem_data.csv");
 
-  timespec point_of_interest1 {1532334879, 40000000};
-  timespec point_of_interest2 {1532335268, 0};
-  timespec point_of_interest3 {1532334000, 0};
+  timespec point_of_interest1 {1532335268, 0};
+  timespec point_of_interest2 {1532334000, 0};
 
   get_ecef_vel_at_poi(lla_data, point_of_interest1, true);
   get_ecef_vel_at_poi(lla_data, point_of_interest2, true);
-  get_ecef_vel_at_poi(lla_data, point_of_interest3, true);
 
 // Exact match found for timestamp: 1532334879 s, 40000000 ns
 //         ECEF velocity at timestamp is:

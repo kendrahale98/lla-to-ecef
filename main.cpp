@@ -13,7 +13,7 @@
 #include "./lla_to_ecef.h"
 
 int main() {
-  std::vector<PositionLLA> lla_data = read_csv_lla("./SciTec_code_problem_data.csv");
+  std::vector<PositionLLA> lla_data = read_csv_lla("./main_data.csv");
 
   timespec point_of_interest1 {1532335268, 0};
   timespec point_of_interest2 {1532334000, 0};

@@ -14,6 +14,7 @@
 
 #include "./time_utils.h"
 
+#define SUCCESS 0
 #define INDEX_ERR -1
 #define KM_TO_M 1000
 
@@ -49,16 +50,18 @@ struct PositionVelocityECEF {
 std::vector<PositionLLA> read_csv_lla(const std::string& filename);
 
 // Calculates ECEF velocity at a point of interest.
-std::vector<double> get_ecef_vel_at_poi(
+int get_ecef_vel_at_pt(
     const std::vector<PositionLLA>& lla_data,
     const timespec& point_of_interest,
+    std::vector<double>& result,
     const bool& print_output
 );
 
 // Finds indices of exact match or nearest points for a point of interest.
-std::vector<int> find_match_or_nearest(
+int find_match_or_nearest(
     const std::vector<PositionLLA>& data,
-    timespec point_of_interest
+    timespec point_of_interest,
+    bool& exact_match
 );
 
 // Converts a position in LLA coordinates to ECEF coordinates.

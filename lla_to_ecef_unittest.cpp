@@ -65,17 +65,96 @@ TEST(read_csv_lla_test, TestBadRead) {
 }
 
 // ============================================================================
-// Tests get_ecef_vel_at_poi().
+// Tests get_ecef_vel_at_pt().
 // ============================================================================
 
-// TODO write test
+// Tests for a point out-of-range.
+TEST(get_ecef_vel_at_pt_test, TestPointOutOfRange) {
+  std::vector<PositionLLA> data;
+  data.push_back(PositionLLA {timespec {1000, 0}, 55, 75, 1500});
+  data.push_back(PositionLLA {timespec {1300, 0}, 55.4, 74, 1450});
+
+  timespec pt {500, 0};
+  std::vector<double> result;
+
+  EXPECT_THROW({
+    try {
+      int result_code = get_ecef_vel_at_pt(data, pt, result, false);
+    }
+    catch(const std::runtime_error& e) {
+      EXPECT_STREQ(
+        "Point of interest is not within range of data set.", e.what());
+      throw;
+    }
+  }, std::runtime_error);
+}
+
+// Tests for a point matching one in the set.
+TEST(get_ecef_vel_at_pt_test, TestExactMatch) {
+  double test_tol = 1e-6;
+  
+  std::vector<PositionLLA> data;
+  data.push_back(PositionLLA {timespec {1000, 0}, 55, 75, 1500});
+  data.push_back(PositionLLA {timespec {1300, 0}, 55.4, 74, 1450});
+  data.push_back(PositionLLA {timespec {1500, 0}, 55.8, 73, 1450});
+  data.push_back(PositionLLA {timespec {1600, 0}, 56, 74, 1450});
+  data.push_back(PositionLLA {timespec {2000, 0}, 56.1, 75, 1450});
+
+  // Test exact match that is not first point
+  timespec pt {data[2].t.tv_sec, data[2].t.tv_nsec};
+  std::vector<double> result;
+  int result_code = get_ecef_vel_at_pt(data, pt, result, false);
+  EXPECT_EQ(SUCCESS, result_code);
+  EXPECT_NEAR(250.070838500001, result[0], test_tol);
+  EXPECT_NEAR(-265.728374999999, result[1], test_tol);
+  EXPECT_NEAR(125.829012000002, result[2], test_tol);
+
+  // Test exact match that is first point
+  timespec first_pt {data[0].t.tv_sec, data[0].t.tv_nsec};
+  std::vector<double> result2;
+  int result_code2 = get_ecef_vel_at_pt(data, first_pt, result2, false);
+  EXPECT_EQ(SUCCESS, result_code2);
+  EXPECT_DOUBLE_EQ(0, result2[0]);
+  EXPECT_DOUBLE_EQ(0, result2[1]);
+  EXPECT_DOUBLE_EQ(0, result2[2]);
+}
+
+// Tests for a point requiring interpolation.
+TEST(get_ecef_vel_at_pt_test, TestNeedingInterpolation) {
+  double test_tol = 1e-6;
+  
+  std::vector<PositionLLA> data;
+  data.push_back(PositionLLA {timespec {1000, 0}, 55, 75, 1500});
+  data.push_back(PositionLLA {timespec {1300, 0}, 55.4, 74, 1450});
+  data.push_back(PositionLLA {timespec {1500, 0}, 55.8, 73, 1450});
+  data.push_back(PositionLLA {timespec {1600, 0}, 56, 74, 1450});
+  data.push_back(PositionLLA {timespec {2000, 0}, 56.1, 75, 1450});
+
+  // Test point between first and second index
+  timespec pt {1100, 0};
+  std::vector<double> result;
+  int result_code = get_ecef_vel_at_pt(data, pt, result, false);
+  EXPECT_EQ(SUCCESS, result_code);
+  EXPECT_NEAR(57.3234554444443, result[0], test_tol);
+  EXPECT_NEAR(-58.1010510000003, result[1], test_tol);
+  EXPECT_NEAR(28.199050777778, result[2], test_tol);
+
+  // Test point not between first and second index
+  timespec pt2 {1502, 0};
+  std::vector<double> result2;
+  int result_code2 = get_ecef_vel_at_pt(data, pt2, result2, false);
+  EXPECT_EQ(SUCCESS, result_code2);
+  EXPECT_NEAR(232.023708250001, result2[0], test_tol);
+  EXPECT_NEAR(-260.396455899999, result2[1], test_tol);
+  EXPECT_NEAR(125.809860020002, result2[2], test_tol);
+}
 
 // ============================================================================
 // Tests find_match_or_nearest().
 // ============================================================================
 
-// Tests find_match_or_nearest when data range is valid for request.
-TEST(find_match_or_nearest_test, TestExpectGoodReturn) {
+// Tests for exact match, in-range non-exact, and out of range.
+TEST(find_match_or_nearest_test, Test) {
   std::vector<PositionLLA> data;
   data.push_back(PositionLLA {timespec {1000, 0}, 55, 75, 1500});
   data.push_back(PositionLLA {timespec {1300, 0}, 55.4, 74, 1450});
@@ -84,31 +163,31 @@ TEST(find_match_or_nearest_test, TestExpectGoodReturn) {
   data.push_back(PositionLLA {timespec {2000, 0}, 56.1, 75, 1450});
 
   // Test a point with an exact match
+  bool match1;
   timespec pt {data[2].t.tv_sec, data[2].t.tv_nsec};
-  std::vector<int> result = find_match_or_nearest(data, pt);
-  EXPECT_EQ(INDEX_ERR, result[0]);
-  EXPECT_EQ(2, result[1]);
-  EXPECT_EQ(INDEX_ERR, result[2]);
+  int result = find_match_or_nearest(data, pt, match1);
+  EXPECT_TRUE(match1);
+  EXPECT_EQ(2, result);
 
   // Test a point without an exact match
+  bool match2;
   pt.tv_nsec = 9000;
-  result = find_match_or_nearest(data, pt);
-  EXPECT_EQ(2, result[0]);
-  EXPECT_EQ(INDEX_ERR, result[1]);
-  EXPECT_EQ(3, result[2]);
+  result = find_match_or_nearest(data, pt, match2);
+  EXPECT_FALSE(match2);
+  EXPECT_EQ(2, result);
 
   // Test points out of range
+  bool match3;
   pt.tv_sec = 500;
-  result = find_match_or_nearest(data, pt);
-  EXPECT_EQ(INDEX_ERR, result[0]);
-  EXPECT_EQ(INDEX_ERR, result[1]);
-  EXPECT_EQ(INDEX_ERR, result[2]);
+  result = find_match_or_nearest(data, pt, match3);
+  EXPECT_FALSE(match3);
+  EXPECT_EQ(INDEX_ERR, result);
 
+  bool match4;
   pt.tv_sec = 2500;
-  result = find_match_or_nearest(data, pt);
-  EXPECT_EQ(INDEX_ERR, result[0]);
-  EXPECT_EQ(INDEX_ERR, result[1]);
-  EXPECT_EQ(INDEX_ERR, result[2]);
+  result = find_match_or_nearest(data, pt, match4);
+  EXPECT_FALSE(match4);
+  EXPECT_EQ(INDEX_ERR, result);
 }
 
 // ============================================================================

@@ -88,7 +88,7 @@ std::vector<PositionLLA> read_csv_lla(const std::string& filename) {
 }
 
 /**
- * get_ecef_vel_at_poi
+ * get_ecef_vel_at_pt
  * @brief Calculates ECEF velocity at a point of interest.
  *
  * Linear interpolation formula is derived by solving for the unkown y-value
@@ -96,78 +96,88 @@ std::vector<PositionLLA> read_csv_lla(const std::string& filename) {
  *
  *          slope = (y - y0) / (x - x0) = (y1 - y0) / (x1 - x0)
  *
- * @param lla_data          timestamped LLA data (deg, deg, m)
- * @param point_of_interest timespec for point of interest
- * @param print_output      flag to print output to stdout
+ * @param lla_data      timestamped LLA data (deg, deg, m)
+ * @param pt            timespec for point of interest
+ * @param print_output  flag to print output to stdout
  *
  * @return XYZ ECEF velocity at the point of interest
  */
-std::vector<double> get_ecef_vel_at_poi(
+int get_ecef_vel_at_pt(
     const std::vector<PositionLLA>& lla_data,
-    const timespec& point_of_interest,
+    const timespec& pt,
+    std::vector<double>& result,
     const bool& print_output) {
 
-  // Search data for point of interest
-  std::vector<int> search_results =
-    find_match_or_nearest(lla_data, point_of_interest);
+    // Search data for point of interest
+    bool exact_match;
+    int search_result = find_match_or_nearest(lla_data, pt, exact_match);
 
-  std::vector<double> velocity_result;
-
-  // If no exact time match for point of interest was found, interpolate
-  if (search_results[1] == INDEX_ERR) {
-    if (print_output) {
-        std::cout << "No exact match found for timestamp: ";
-        std::cout << point_of_interest.tv_sec << " s, ";
-        std::cout << point_of_interest.tv_nsec << " ns";
-        std::cout << ". Interpolating from nearby points." << std::endl;
+    if (search_result == INDEX_ERR) {
+        throw std::runtime_error(std::format(
+        "Point of interest is not within range of data set."));
+        return INDEX_ERR;
     }
 
-    // Get nearby points in ECEF
-    PositionVelocityECEF before_before = lla_to_ecef_pos(
-        lla_data[search_results[0] - 1],
-        WGS84Params::A, WGS84Params::B, WGS84Params::E);
-    PositionVelocityECEF before = lla_to_ecef_pos(
-        lla_data[search_results[0]],
-        WGS84Params::A, WGS84Params::B, WGS84Params::E);
-    PositionVelocityECEF after = lla_to_ecef_pos(
-        lla_data[search_results[2]],
-        WGS84Params::A, WGS84Params::B, WGS84Params::E);
+    if (exact_match) {
+        if (print_output) {
+            std::cout << "Exact match found for timestamp: ";
+            std::cout << pt.tv_sec << " s, ";
+            std::cout << pt.tv_nsec << " ns" << std::endl;
+        }
 
-    // Calculate velocity at nearby points
-    get_vel_ecef(before_before, &before);
-    get_vel_ecef(before, &after);
+        // The point is the first point, whose velocity is defined as zero
+        if (search_result == 0) {
+            result = {0, 0, 0};
+            return SUCCESS;
+        }
+        
+        PositionVelocityECEF before = lla_to_ecef_pos(
+            lla_data[search_result - 1],
+            WGS84Params::A, WGS84Params::B, WGS84Params::E);
+        PositionVelocityECEF at_point = lla_to_ecef_pos(
+            lla_data[search_result],
+            WGS84Params::A, WGS84Params::B, WGS84Params::E);
+        
+        get_vel_ecef(before, &at_point);
 
-    // interpolate_2d to find velocity at point of interest
-    velocity_result = interpolate_ecef_vel(before, after, point_of_interest);
+        result = {at_point.v_x, at_point.v_y, at_point.v_z};
+    } else {
+        if (print_output) {
+            std::cout << "No exact match found for timestamp: ";
+            std::cout << pt.tv_sec << " s, ";
+            std::cout << pt.tv_nsec << " ns." << std::endl;
+            std::cout << ". Interpolating from nearby points." << std::endl;
+        }
 
-  } else {
-    if (print_output) {
-        std::cout << "Exact match found for timestamp: ";
-        std::cout << point_of_interest.tv_sec << " s, ";
-        std::cout << point_of_interest.tv_nsec << " ns" << std::endl;
+        PositionVelocityECEF before = lla_to_ecef_pos(
+                lla_data[search_result],
+                WGS84Params::A, WGS84Params::B, WGS84Params::E);
+        PositionVelocityECEF after = lla_to_ecef_pos(
+                lla_data[search_result + 1],
+                WGS84Params::A, WGS84Params::B, WGS84Params::E);
+
+        // If not at first point in data, calculate velocity at point before
+        if (search_result != 0) {
+            PositionVelocityECEF before_before = lla_to_ecef_pos(
+                lla_data[search_result - 1],
+                WGS84Params::A, WGS84Params::B, WGS84Params::E);
+            get_vel_ecef(before_before, &before);
+        }
+
+        get_vel_ecef(before, &after);
+        result = interpolate_ecef_vel(before, after, pt);
     }
 
-    PositionVelocityECEF pv_ecef_before_poi = lla_to_ecef_pos(
-        lla_data[search_results[1] - 1],
-        WGS84Params::A, WGS84Params::B, WGS84Params::E);
-    PositionVelocityECEF pv_ecef_poi = lla_to_ecef_pos(
-        lla_data[search_results[1]],
-        WGS84Params::A, WGS84Params::B, WGS84Params::E);
-    get_vel_ecef(pv_ecef_before_poi, &pv_ecef_poi);
+    if (print_output) {
+        std::cout << "\tECEF velocity at timestamp is:" << std::endl;
+        std::cout << std::fixed << std::setprecision(15);
+        std::cout << "\t\tv_x [m/s]: " << result[0] << std::endl;
+        std::cout << "\t\tv_y [m/s]: " << result[1] << std::endl;
+        std::cout << "\t\tv_z [m/s]: " << result[2] << std::endl;
+        std::cout << std::endl;
+    }
 
-    velocity_result = {pv_ecef_poi.v_x, pv_ecef_poi.v_y, pv_ecef_poi.v_z};
-  }
-
-  if (print_output) {
-      std::cout << "\tECEF velocity at timestamp is:" << std::endl;
-      std::cout << std::fixed << std::setprecision(15);
-      std::cout << "\t\tv_x [m/s]: " << velocity_result[0] << std::endl;
-      std::cout << "\t\tv_y [m/s]: " << velocity_result[1] << std::endl;
-      std::cout << "\t\tv_z [m/s]: " << velocity_result[2] << std::endl;
-      std::cout << std::endl;
-  }
-
-  return velocity_result;
+    return SUCCESS;
 }
 
 /**
@@ -191,34 +201,33 @@ std::vector<double> get_ecef_vel_at_poi(
  *
  * @return vector of indices from search
  */
-std::vector<int> find_match_or_nearest(
+int find_match_or_nearest(
     const std::vector<PositionLLA>& lla_data,
-    timespec point_of_interest) {
-
-    // Before, exact match, after
-    std::vector<int> indices {INDEX_ERR, INDEX_ERR, INDEX_ERR};
-
-    // Exit if point of interest is out of range
-    if ((ts_is_before(point_of_interest, lla_data[0].t))
-            || ts_is_before(lla_data.back().t, point_of_interest) ) {
-        return indices;
+    timespec point_of_interest,
+    bool& exact_match) {
+    exact_match = false;
+    int idx = 0;
+    
+    // Return error if point is not within range
+    if (ts_is_before(point_of_interest, lla_data[0].t)
+          || ts_is_before(lla_data.back().t, point_of_interest)) {
+        return INDEX_ERR;
     }
     
-    int idx = 0;
+    // Linear search otherwise
     for (const auto &entry : lla_data) {
         if (ts_is_equal(entry.t, point_of_interest)) {
-            indices[1] = idx;
-            break;
+            exact_match = true;
+            return idx;
         } else if (ts_is_before(entry.t, point_of_interest)) {
             idx++;
             continue;
         } else {
-            indices[0] = idx - 1;
-            indices[2] = idx;
+            return idx - 1;
         }
     }
 
-    return indices;
+    return idx;
 }
 
 /**

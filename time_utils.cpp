@@ -19,13 +19,7 @@
  * @return true if ts1 is before ts2, false otherwise
  */
 bool ts_is_before(const timespec& ts1, const timespec &ts2) {
-    if (ts1.tv_sec < ts2.tv_sec) {
-        return true;
-    } else if (ts1.tv_sec == ts2.tv_sec) {
-        return (ts1.tv_nsec < ts2.tv_nsec);
-    } else {
-        return false;
-    }
+    return ((ts1.tv_sec < ts2.tv_sec) || (ts1.tv_nsec < ts2.tv_nsec));
 }
 
 /**
@@ -50,5 +44,5 @@ bool ts_is_equal(const timespec& ts1, const timespec& ts2) {
  * @return the timespec as a double
  */
 double ts_to_double(const timespec& ts) {
-  return ts.tv_sec + static_cast<double>(ts.tv_nsec / 1e9);
+  return static_cast<double>(ts.tv_sec) + static_cast<double>(ts.tv_nsec / 1e9);
 }

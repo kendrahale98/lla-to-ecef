@@ -146,7 +146,7 @@ int get_ecef_vel_at_pt(
             std::cout << "No exact match found for timestamp: ";
             std::cout << pt.tv_sec << " s, ";
             std::cout << pt.tv_nsec << " ns." << std::endl;
-            std::cout << ". Interpolating from nearby points." << std::endl;
+            std::cout << "\tInterpolating from nearby points." << std::endl;
         }
 
         PositionVelocityECEF before = lla_to_ecef_pos(

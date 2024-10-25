@@ -3,7 +3,7 @@ Project to create an LLA to ECEF converter with ability to calculate and interpo
 
 ## Build Instructions
 
-This project was developed using C++20. 
+This project was developed using C++20 on Ubuntu 24.04 LTS.
 
 ### Prerequisites
 

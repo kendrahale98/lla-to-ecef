@@ -153,7 +153,6 @@ TEST(get_ecef_vel_at_pt_test, TestNeedingInterpolation) {
 // Tests find_match_or_nearest().
 // ============================================================================
 
-// Tests for exact match, in-range non-exact, and out of range.
 TEST(find_match_or_nearest_test, Test) {
   std::vector<PositionLLA> data;
   data.push_back(PositionLLA {timespec {1000, 0}, 55, 75, 1500});
@@ -286,7 +285,6 @@ TEST(lla_to_ecef_pos_test, Test) {
 // Tests get_rad_of_curvature().
 // ============================================================================
 
-// Tests get_rad_of_curvature at multiple latitude values.
 TEST(get_rad_of_curvature_test, Test) {
   double a = std::sqrt(3) / 2;
   double e = 0.5;
@@ -340,7 +338,16 @@ TEST(get_vel_ecef_test, Test) {
 // Tests interpolate_ecef_vel().
 // ============================================================================
 
-// TODO write test
+TEST(interpolate_ecef_vel_test, Test) {
+  PositionVelocityECEF before {timespec {100, 500000000}, 0, 0, 0, 1, 2, 3};
+  PositionVelocityECEF after {timespec {102, 700000000}, 0, 0, 0, 4, -5, 0.006};
+  timespec pt {101, 30000000};
+
+  std::vector<double> result = interpolate_ecef_vel(before, after, pt);
+  EXPECT_DOUBLE_EQ(1.7227272727272733, result[0]);
+  EXPECT_DOUBLE_EQ(0.3136363636363622, result[1]);
+  EXPECT_DOUBLE_EQ(2.2787181818181814, result[2]);
+}
 
 // ============================================================================
 // Tests interpolate_2d().
